@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>벨녹웍스 포트폴리오 — 전환되는 홈페이지</title>
+  <meta name="description" content="직접 만든 음식점·로컬 브랜드 작업입니다. 벨녹웍스 포트폴리오.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#F9F8F5">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23B8975A'/><text x='50%25' y='22' text-anchor='middle' font-family='system-ui,sans-serif' font-size='16' font-weight='900' fill='white'>V</text></svg>">
+
+  <!-- Pretendard Variable — best Korean web font -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable.min.css">
+
+  <style>
+    /* ── Design tokens ─────────────────────── */
+    :root {
+      --bg:       #F9F8F5;
+      --surface:  #FFFFFF;
+      --text:     #1A1916;
+      --text-2:   #797871;
+      --text-3:   #B0AFA8;
+      --border:   #E6E4DC;
+      --accent:   #B8975A;
+      --accent-h: #9B7D44;
+      --dark:     #1E1D1A;
+      --radius:   8px;
+      --font: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont,
+              'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    }
+
+    /* ── Reset ──────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    img { display: block; max-width: 100%; }
+    a { color: inherit; }
+
+    /* ── Animations ─────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .anim-1 { animation: fadeUp 0.65s ease both; animation-delay: 0.1s; }
+      .anim-2 { animation: fadeUp 0.7s ease both;  animation-delay: 0.22s; }
+      .anim-3 { animation: fadeUp 0.7s ease both;  animation-delay: 0.38s; }
+    }
+
+    /* ── NAV ─────────────────────────────────── */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(249,248,245,0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-in {
+      max-width: 1280px; margin: 0 auto;
+      padding: 0 clamp(1.5rem, 5vw, 4rem);
+      height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      font-size: 1.0625rem; font-weight: 800; letter-spacing: -0.03em;
+      text-decoration: none; color: var(--text);
+    }
+    .logo b { color: var(--accent); font-weight: 800; }
+    .btn-kmong {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      background: var(--text); color: var(--bg);
+      font-family: var(--font); font-size: 0.8125rem; font-weight: 700;
+      letter-spacing: -0.01em;
+      padding: 0.5rem 1.125rem; border-radius: 100px;
+      text-decoration: none; transition: background 0.18s;
+    }
+    .btn-kmong:hover { background: var(--accent); }
+    .btn-kmong svg { transition: transform 0.18s; flex-shrink: 0; }
+    .btn-kmong:hover svg { transform: translate(1px,-1px); }
+
+    /* ── HERO ────────────────────────────────── */
+    .hero {
+      max-width: 1280px; margin: 0 auto;
+      padding: clamp(5rem, 13vw, 10rem) clamp(1.5rem, 5vw, 4rem) clamp(3.5rem, 7vw, 6rem);
+    }
+    .hero-eyebrow {
+      font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 1.5rem;
+    }
+    .hero-title {
+      font-size: clamp(3.75rem, 10vw, 8rem);
+      font-weight: 900; line-height: 1.0; letter-spacing: -0.04em;
+      margin-bottom: 1.75rem;
+    }
+    .hero-sub {
+      font-size: clamp(1.0625rem, 2.2vw, 1.3rem);
+      font-weight: 400; color: var(--text-2);
+      max-width: 440px; line-height: 1.72;
+    }
+    .divider {
+      max-width: 1280px; margin: 0 auto;
+      padding: 0 clamp(1.5rem, 5vw, 4rem);
+      height: 1px; background: var(--border); border: none;
+    }
+
+    /* ── PORTFOLIO ───────────────────────────── */
+    .portfolio {
+      max-width: 1280px; margin: 0 auto;
+      padding: clamp(3rem, 5vw, 4.5rem) clamp(1.5rem, 5vw, 4rem);
+    }
+    .portfolio-header {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 2.5rem;
+    }
+    .sec-label {
+      font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3);
+    }
+    .sec-count { font-size: 0.75rem; color: var(--text-3); font-weight: 400; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.75rem;
+    }
+    @media (max-width: 740px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── CARD ────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      transition: transform 0.28s cubic-bezier(.2,.8,.4,1),
+                  box-shadow 0.28s cubic-bezier(.2,.8,.4,1);
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 52px -8px rgba(26,25,22,0.12);
+    }
+
+    /* image area */
+    .card-media {
+      position: relative; aspect-ratio: 16/9;
+      background: #ECEAE4; overflow: hidden; flex-shrink: 0;
+    }
+    .card-img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.5s cubic-bezier(.2,.8,.4,1);
+    }
+    .card:hover .card-img { transform: scale(1.04); }
+
+    /* placeholder when image is missing */
+    .card-ph {
+      display: none;
+      position: absolute; inset: 0;
+      flex-direction: column; align-items: center; justify-content: center;
+      background: #ECEAE4; gap: 0.375rem; text-align: center; padding: 1rem;
+    }
+    .card-ph strong {
+      font-size: 1.125rem; font-weight: 800; letter-spacing: -0.025em;
+      color: var(--text);
+    }
+    .card-ph small { font-size: 0.75rem; color: var(--text-3); font-weight: 400; }
+
+    /* number badge */
+    .card-num {
+      position: absolute; top: 0.875rem; left: 0.875rem; z-index: 2;
+      font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.9);
+      background: rgba(26,25,22,0.42);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      padding: 0.2rem 0.55rem; border-radius: 100px;
+    }
+
+    /* card body */
+    .card-body { padding: 1.625rem 1.625rem 0; flex: 1; }
+    .card-head {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 0.75rem;
+      margin-bottom: 0.6rem;
+    }
+    .card-name {
+      font-size: 1.5rem; font-weight: 800;
+      letter-spacing: -0.03em; line-height: 1.15;
+    }
+    .card-cat {
+      flex-shrink: 0; margin-top: 0.3rem;
+      font-size: 0.6875rem; font-weight: 600; color: var(--text-3);
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 100px; padding: 0.2rem 0.7rem; white-space: nowrap;
+    }
+    .card-hook {
+      font-size: 0.9375rem; font-weight: 500;
+      color: var(--text-2); line-height: 1.6; margin-bottom: 1.25rem;
+    }
+
+    /* 3-row details */
+    .card-details { border-top: 1px solid var(--border); }
+    .detail-row {
+      display: flex; gap: 0.875rem; align-items: flex-start;
+      padding: 0.575rem 0;
+      border-bottom: 1px dashed var(--border);
+      font-size: 0.8125rem; line-height: 1.55;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-lbl {
+      flex: 0 0 4rem;
+      font-size: 0.625rem; font-weight: 700;
+      color: var(--accent); padding-top: 0.18rem; white-space: nowrap;
+    }
+    .detail-val { flex: 1; color: var(--text-2); }
+
+    /* card footer */
+    .card-foot {
+      padding: 1.1rem 1.625rem;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .card-domain { font-size: 0.6875rem; color: var(--text-3); font-weight: 400; }
+    .card-link {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-size: 0.875rem; font-weight: 700; letter-spacing: -0.01em;
+      text-decoration: none; color: var(--text);
+      transition: color 0.18s;
+    }
+    .card-link svg { flex-shrink: 0; transition: transform 0.18s; }
+    .card-link:hover { color: var(--accent); }
+    .card-link:hover svg { transform: translate(2px,-2px); }
+
+    /* ── CTA BAND ────────────────────────────── */
+    .cta-wrap {
+      max-width: 1280px; margin: 0 auto;
+      padding: clamp(2rem, 4vw, 3.5rem) clamp(1.5rem, 5vw, 4rem);
+    }
+    .cta-band {
+      background: var(--dark); border-radius: 14px;
+      padding: clamp(3rem, 6.5vw, 5.5rem) clamp(2rem, 5.5vw, 5.5rem);
+      display: flex; align-items: center; justify-content: space-between; gap: 2rem;
+    }
+    @media (max-width: 560px) {
+      .cta-band { flex-direction: column; align-items: flex-start; }
+    }
+    .cta-text {
+      font-size: clamp(1.375rem, 3.4vw, 2.125rem);
+      font-weight: 800; letter-spacing: -0.03em;
+      color: #F9F8F5; line-height: 1.3; max-width: 460px;
+    }
+    .btn-cta {
+      flex-shrink: 0;
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      background: var(--accent); color: #fff;
+      font-family: var(--font); font-size: 0.9375rem; font-weight: 700;
+      letter-spacing: -0.01em;
+      padding: 0.9rem 2rem; border-radius: 100px;
+      text-decoration: none; white-space: nowrap;
+      transition: background 0.18s, transform 0.18s;
+    }
+    .btn-cta:hover { background: var(--accent-h); transform: translateY(-2px); }
+    .btn-cta svg { flex-shrink: 0; transition: transform 0.18s; }
+    .btn-cta:hover svg { transform: translate(1px,-1px); }
+
+    /* ── FOOTER ──────────────────────────────── */
+    footer {
+      max-width: 1280px; margin: 0 auto;
+      padding: 2rem clamp(1.5rem, 5vw, 4rem);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 0.75rem;
+    }
+    .f-copy    { font-size: 0.8125rem; color: var(--text-3); }
+    .f-tagline { font-size: 0.8125rem; color: var(--text-3); }
+
+    /* ── Utilities ───────────────────────────── */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══════════════════════════════════ -->
+<nav class="nav" aria-label="주 메뉴">
+  <div class="nav-in">
+    <a href="/" class="logo">벨녹<b>웍스</b></a>
+    <!-- TODO: href를 실제 크몽 프로필 URL로 교체하세요 (예: https://kmong.com/gig/XXXXXX) -->
+    <a href="https://kmong.com" target="_blank" rel="noopener noreferrer" class="btn-kmong">
+      크몽 문의
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M7 7h10v10"/><path d="M7 17 17 7"/>
+      </svg>
+    </a>
+  </div>
+</nav>
+
+<!-- ═══ HERO ══════════════════════════════════ -->
+<header>
+  <div class="hero">
+    <p class="hero-eyebrow anim-1">벨녹웍스 포트폴리오</p>
+    <h1 class="hero-title anim-2">말보다,<br>결과로.</h1>
+    <p class="hero-sub anim-3">직접 만든 음식점·로컬 브랜드 작업입니다.</p>
+  </div>
+  <hr class="divider" aria-hidden="true">
+</header>
+
+<!-- ═══ PORTFOLIO ════════════════════════════= -->
+<main>
+  <section class="portfolio" aria-label="포트폴리오">
+    <div class="portfolio-header">
+      <span class="sec-label">작업물</span>
+      <span class="sec-count">04 프로젝트</span>
+    </div>
+
+    <div class="grid">
+
+      <!-- ① 정숙성 ──────────────────────────── -->
+      <article class="card">
+        <div class="card-media">
+          <span class="card-num" aria-hidden="true">01</span>
+          <img
+            class="card-img"
+            src="/public/portfolio/01-jeongsuksung.jpg"
+            alt="정숙성 한식 고깃집 홈페이지 포트폴리오"
+            loading="lazy"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+          >
+          <div class="card-ph" aria-hidden="true">
+            <strong>정숙성</strong>
+            <small>이미지 준비 중</small>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-head">
+            <h2 class="card-name">정숙성</h2>
+            <span class="card-cat">한식 · 고깃집</span>
+          </div>
+          <p class="card-hook">숙성 한우의 깊이를, 검색 첫 줄에.</p>
+          <div class="card-details">
+            <div class="detail-row">
+              <span class="detail-lbl">디자인</span>
+              <span class="detail-val">풀스크린 영상형 히어로(숙성육 질감·불향), 매장별 로컬 페이지로 동선·예약 분리</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-lbl">기술</span>
+              <span class="detail-val">LocalBusiness·Menu 스키마, "○○동 고깃집" 지역검색 대응 구조, 예약 연동</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-lbl">운영</span>
+              <span class="detail-val">메뉴·지점 업데이트 + 검색·AI 노출 모니터링 매월</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-foot">
+          <span class="card-domain">jungsooksung.vercel.app</span>
+          <a href="https://jungsooksung.vercel.app/ko" target="_blank" rel="noopener noreferrer" class="card-link">
+            사이트 보기
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 7h10v10"/><path d="M7 17 17 7"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <!-- ② 올리멘 ──────────────────────────── -->
+      <article class="card">
+        <div class="card-media">
+          <span class="card-num" aria-hidden="true">02</span>
+          <img
+            class="card-img"
+            src="/public/portfolio/02-olimen.jpg"
+            alt="올리멘 라멘 홈페이지 포트폴리오"
+            loading="lazy"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+          >
+          <div class="card-ph" aria-hidden="true">
+            <strong>올리멘</strong>
+            <small>이미지 준비 중</small>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-head">
+            <h2 class="card-name">올리멘</h2>
+            <span class="card-cat">라멘</span>
+          </div>
+          <p class="card-hook">강남역 라멘 신예, 검색에 그대로.</p>
+          <div class="card-details">
+            <div class="detail-row">
+              <span class="detail-lbl">디자인</span>
+              <span class="detail-val">풀스크린 비주얼 히어로 + 메뉴 중심 단일 페이지, 브랜드 스토리</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-lbl">기술</span>
+              <span class="detail-val">메뉴·매장위치 SEO·스키마, 단일페이지 검색최적화, 신생 브랜드 AI 후보군 진입 구조</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-lbl">운영</span>
+              <span class="detail-val">신메뉴·이벤트 반영 + AI 검색 구조 점검 정기</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-foot">
+          <span class="card-domain">olimen-brand-compass.pages.dev</span>
+          <a href="https://olimen-brand-compass.pages.dev/" target="_blank" rel="noopener noreferrer" class="card-link">
+            사이트 보기
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 7h10v10"/><path d="M7 17 17 7"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <!-- ③ 헤이필름 ────────────────────────── -->
+      <article class="card">
+        <div class="card-media">
+          <span class="card-num" aria-hidden="true">03</span>
+          <img
+            class="card-img"
+            src="/public/portfolio/03-hejfilm.jpg"
+            alt="헤이필름 스냅 스튜디오 홈페이지 포트폴리오"
+            loading="lazy"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+          >
+          <div class="card-ph" aria-hidden="true">
+            <strong>헤이필름</strong>
+            <small>이미지 준비 중</small>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-head">
+            <h2 class="card-name">헤이필름</h2>
+            <span class="card-cat">스냅 스튜디오</span>
+          </div>
+          <p class="card-hook">기록이 곧 브랜드가 되는 스냅.</p>
+          <div class="card-details">
+            <div class="detail-row">
+              <span class="detail-lbl">디자인</span>
+              <span class="detail-val">다크 에디토리얼(warm matte near-black + brass), 인터랙티브 갤러리</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-lbl">기술</span>
+              <span class="detail-val">고화질 이미지 최적화, 예약·문의(CONTACT) 동선, 부드러운 갤러리 인터랙션</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-lbl">운영</span>
+              <span class="detail-val">포트폴리오 갱신 + 시즌 가이드 업데이트</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-foot">
+          <span class="card-domain">hej-film-page.pages.dev</span>
+          <a href="https://hej-film-page.pages.dev/" target="_blank" rel="noopener noreferrer" class="card-link">
+            사이트 보기
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 7h10v10"/><path d="M7 17 17 7"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <!-- ④ 블라썸앤블랙 ──────────────────── -->
+      <article class="card">
+        <div class="card-media">
+          <span class="card-num" aria-hidden="true">04</span>
+          <img
+            class="card-img"
+            src="/public/portfolio/04-blossomblack.jpg"
+            alt="블라썸앤블랙 플라워 홈페이지 포트폴리오"
+            loading="lazy"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+          >
+          <div class="card-ph" aria-hidden="true">
+            <strong>블라썸앤블랙</strong>
+            <small>이미지 준비 중</small>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-head">
+            <h2 class="card-name">블라썸앤블랙</h2>
+            <span class="card-cat">플라워</span>
+          </div>
+          <p class="card-hook">꽃의 무드를 그대로 웹으로.</p>
+          <div class="card-details">
+            <div class="detail-row">
+              <span class="detail-lbl">디자인</span>
+              <span class="detail-val">스플릿 아트 히어로 + 컬렉션·갤러리, 감성 타이포</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-lbl">기술</span>
+              <span class="detail-val">감성 타이포 + 스키마, 비스포크·예약(RESERVE) 연결, 주문 동선</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-lbl">운영</span>
+              <span class="detail-val">시즌 컬렉션 교체 + 비주얼 운영</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-foot">
+          <span class="card-domain">florist.demo.velnoc.com</span>
+          <a href="https://florist.demo.velnoc.com/" target="_blank" rel="noopener noreferrer" class="card-link">
+            사이트 보기
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 7h10v10"/><path d="M7 17 17 7"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+    </div>
+  </section>
+</main>
+
+<!-- ═══ CTA ═══════════════════════════════════ -->
+<div class="cta-wrap">
+  <section class="cta-band" aria-labelledby="cta-h">
+    <h2 class="cta-text" id="cta-h">음식점 홈페이지,<br>벨녹웍스와 시작하세요.</h2>
+    <!-- TODO: href를 실제 크몽 프로필 URL로 교체하세요 (예: https://kmong.com/gig/XXXXXX) -->
+    <a href="https://kmong.com" target="_blank" rel="noopener noreferrer" class="btn-cta">
+      크몽에서 문의하기
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M7 7h10v10"/><path d="M7 17 17 7"/>
+      </svg>
+    </a>
+  </section>
+</div>
+
+<!-- ═══ FOOTER ════════════════════════════════ -->
+<footer>
+  <span class="f-copy">© 2025 벨녹웍스</span>
+  <span class="f-tagline">전환되는 홈페이지를 만들어 드리는 곳</span>
+</footer>
+
+</body>
+</html>
