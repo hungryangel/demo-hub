@@ -115,7 +115,7 @@
 
     /* ── HERO SHADER MOUNT ───────────────────── */
     /* 원본 velnoc-digital-canvas와 동일한 shaders 패키지 사용
-       (Swirl + ChromaFlow + FlutedGlass + FilmGrain via esm.sh CDN) */
+       (Swirl + ChromaFlow + FlutedGlass + FilmGrain — 로컬 벤더 번들) */
     .hero-wrap {
       position: relative;
       overflow: hidden;
@@ -642,157 +642,55 @@
   <span class="f-tagline">전환되는 홈페이지를 만들어 드리는 곳</span>
 </footer>
 
-<!-- ═══ HERO SHADER — WebGL GLSL (velnoc-digital-canvas 원본 파라미터 1:1) ══ -->
-<!-- Swirl(colorA=#fff,colorB=#f0f0f0,detail=1.7)
-     ChromaFlow(baseColor=#fff,edges=#ff5f03,momentum=13,radius=3.5)
-     FlutedGlass(aberration=0.61,angle=31,frequency=8,highlight=0.12,
-                 highlightSoftness=0,lightAngle=-90,refraction=4,shape=rounded,
-                 softness=1,speed=0.15)
-     FilmGrain(strength=0.05) -->
-<script>
-(function () {
-  'use strict';
-  var mount = document.getElementById('hero-shader-root');
-  if (!mount) return;
+<!-- ═══ HERO SHADER — 원본 shaders 패키지 그대로 (로컬 벤더링) ══════════════ -->
+<!-- velnoc-digital-canvas의 <Shader> 트리를 1:1로 재현:
+       Swirl + ChromaFlow + FlutedGlass + FilmGrain
+     vendor/shaders-bundle.js = shaders@2.5.128 자체 완결 ESM 번들
+       (three.js 인라인 / 빌드·CDN 런타임 의존 없음) -->
+<script type="module">
+  import { createShader } from './vendor/shaders-bundle.js';
 
-  var canvas = document.createElement('canvas');
-  canvas.setAttribute('aria-hidden', 'true');
-  canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none';
-  mount.appendChild(canvas);
+  (async () => {
+    const root = document.getElementById('hero-shader-root');
+    if (!root) return;
 
-  var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-  if (!gl) return; // CSS 폴백으로 충분
+    const canvas = document.createElement('canvas');
+    canvas.setAttribute('aria-hidden', 'true');
+    root.appendChild(canvas);
 
-  var VS = [
-    'attribute vec2 a_p;',
-    'void main(){gl_Position=vec4(a_p,0.,1.);}'
-  ].join('\n');
+    // 원본 velnoc-digital-canvas와 100% 동일한 컴포넌트 트리·파라미터
+    const tree = { components: [
+      { type: 'Swirl', props: { colorA: '#ffffff', colorB: '#f0f0f0', detail: 1.7 } },
+      { type: 'ChromaFlow', props: {
+          baseColor: '#ffffff', downColor: '#ff5f03', leftColor: '#ff5f03',
+          rightColor: '#ff5f03', upColor: '#ff5f03', momentum: 13, radius: 3.5 } },
+      { type: 'FlutedGlass', props: {
+          aberration: 0.61, angle: 31, frequency: 8, highlight: 0.12,
+          highlightSoftness: 0, lightAngle: -90, refraction: 4,
+          shape: 'rounded', softness: 1, speed: 0.15 } },
+      { type: 'FilmGrain', props: { strength: 0.05 } },
+    ] };
 
-  var FS = [
-    'precision highp float;',
-    'uniform vec2 u_res;',
-    'uniform float u_t;',
+    try {
+      const inst = await createShader(canvas, tree);
+      if (inst && inst.resume) inst.resume();
 
-    /* ── hash / noise ── */
-    'float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
-    'float n21(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);',
-    '  return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),f.x),f.y);}',
-    'float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n21(p);p=p*2.+vec2(5.2,1.3);a*=.5;}return v;}',
-
-    'void main(){',
-    '  vec2 uv=gl_FragCoord.xy/u_res;',
-    '  float ar=u_res.x/u_res.y;',
-
-    /* ── 1. SWIRL: colorA=#fff, colorB=#f0f0f0, detail=1.7 ── */
-    '  vec2 su=vec2(uv.x*ar,uv.y)*1.7;',
-    '  float t0=u_t*0.05;',
-    '  float f1=fbm(su+t0);',
-    '  float f2=fbm(su-t0*.7+vec2(4.2,2.3));',
-    '  float sw=fbm(su+vec2(f1,f2)*.55);',
-    '  vec3 col=mix(vec3(1.),vec3(.941,.941,.941),sw*.75);',
-
-    /* ── 2. FLUTED GLASS: aberration=0.61, freq=8, speed=0.15
-            핵심 원리: 밝은 배경에서 additive 하이라이트는 white clamp로 사라짐
-            → multiplicative 방식으로 채널별 색수차 구현
-            ChromaFlow의 오렌지 엣지 색상을 R/G/B 채널로 분리 → 무지개 shimmer ── */
-    '  float rad31=radians(31.);',
-    '  vec2 fPerp=vec2(-sin(rad31),cos(rad31));',
-    '  float ab=0.61*0.04;',          /* phase offset = ab*8 = 0.192 cycle */
-    '  float projG=dot(uv,fPerp);',
-    '  float phR=projG*8.+u_t*0.15+ab*8.;',
-    '  float phG=projG*8.+u_t*0.15;',
-    '  float phB=projG*8.+u_t*0.15-ab*8.;',
-    '  float PI=3.14159265;',
-    '  float sinR=sin(fract(phR)*PI);',
-    '  float sinG=sin(fract(phG)*PI);',
-    '  float sinB=sin(fract(phB)*PI);',
-    /* 트러프 그림자: multiply (2.5% 어둡게) */
-    '  col*=1.-(1.-sinG)*0.018;',
-    /* 색수차 마스크: sinG² → 트러프는 0, 피크만 강함 (분홍 오염 방지) */
-    '  float abMask=sinG*sinG;',
-    '  col.r*=1.+(sinR-sinG)*0.07*abMask;',
-    '  col.b*=1.+(sinB-sinG)*0.07*abMask;',
-
-    /* ── 3. CHROMAFLOW: baseColor=#fff, edges=#ff5f03,
-            momentum=13, radius=3.5 ── */
-    '  float t2=u_t*0.10;',
-    '  float ex=min(uv.x,1.-uv.x)/0.08;',   /* 엣지 8% 이내만 ChromaFlow */
-    '  float ey=min(uv.y,1.-uv.y)/0.08;',
-    '  float edgeDist=min(ex,ey);',
-    '  float flow=sin(t2+uv.x*3.5+uv.y*2.1)*.5+.5;',
-    '  flow=mix(flow,sin(t2*.7+uv.x*ar*2.1+uv.y*3.5)*.5+.5,.4);',
-    '  float cs=(1.-clamp(edgeDist,0.,1.))*.06*flow;',
-    '  vec3 orange=vec3(1.,.373,.012);',          /* #ff5f03 */
-    '  col=mix(col,orange,cs);',
-
-    /* ── 4. FILM GRAIN: strength=0.05 ── */
-    '  float grain=h21(uv+fract(vec2(u_t*.37,u_t*.61)))*.05-.025;',
-    '  col+=vec3(grain);',
-
-    '  gl_FragColor=vec4(clamp(col,0.,1.),1.);',
-    '}'
-  ].join('\n');
-
-  function mkShader(type, src) {
-    var s = gl.createShader(type);
-    gl.shaderSource(s, src); gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-      console.warn('shader err', gl.getShaderInfoLog(s)); return null;
+      // 반응형: 컨테이너 크기 변경 시 렌더러 리사이즈
+      let rt;
+      window.addEventListener('resize', () => {
+        clearTimeout(rt);
+        rt = setTimeout(() => {
+          const r = root.getBoundingClientRect();
+          try { inst.resize(r.width, r.height); }
+          catch (e) { try { inst.resize(); } catch (e2) {} }
+        }, 150);
+      });
+    } catch (e) {
+      // WebGPU/WebGL 미지원 등 → #EFEFEF 단색 배경 폴백 (원본과 동일한 배경색)
+      console.warn('[hero] shader init failed → solid #EFEFEF fallback', e);
+      canvas.remove();
     }
-    return s;
-  }
-
-  var vs = mkShader(gl.VERTEX_SHADER, VS);
-  var fs = mkShader(gl.FRAGMENT_SHADER, FS);
-  if (!vs || !fs) return;
-
-  var prog = gl.createProgram();
-  gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-    console.warn('prog err', gl.getProgramInfoLog(prog)); return;
-  }
-
-  var buf = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-  gl.bufferData(gl.ARRAY_BUFFER,
-    new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]),
-    gl.STATIC_DRAW);
-
-  var aPos  = gl.getAttribLocation(prog, 'a_p');
-  var uRes  = gl.getUniformLocation(prog, 'u_res');
-  var uTime = gl.getUniformLocation(prog, 'u_t');
-
-  function resize() {
-    var w = mount.offsetWidth || window.innerWidth;
-    var h = mount.offsetHeight || 480;
-    canvas.width = w; canvas.height = h;
-    gl.viewport(0, 0, w, h);
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  var start = performance.now();
-  var raf;
-
-  function frame(now) {
-    var elapsed = (now - start) / 1000;
-    gl.useProgram(prog);
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.enableVertexAttribArray(aPos);
-    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
-    gl.uniform2f(uRes, canvas.width, canvas.height);
-    gl.uniform1f(uTime, elapsed);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-    raf = requestAnimationFrame(frame);
-  }
-
-  /* prefers-reduced-motion: 한 번만 렌더, 애니메이션 없음 */
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    frame(performance.now());
-  } else {
-    raf = requestAnimationFrame(frame);
-  }
-})();
+  })();
 </script>
 
 <!-- ═══ SCROLL REVEAL ════════════════════════= -->
