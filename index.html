@@ -668,6 +668,7 @@
     'precision highp float;',
     'uniform vec2 u_res;',
     'uniform float u_t;',
+    'uniform vec2 u_mouse;',
     'float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
     'float n21(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);',
     ' return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),f.x),f.y);}',
@@ -682,12 +683,14 @@
     '  float sw=fbm(su+vec2(f1,f2)*0.55);',
     '  vec3 col=mix(vec3(1.0),vec3(0.941),sw*0.85);',
     '  float t2=u_t*0.10;',
-    '  float ex=min(uv.x,1.-uv.x)/0.10;',
-    '  float ey=min(uv.y,1.-uv.y)/0.10;',
-    '  float edge=1.0-clamp(min(ex,ey),0.,1.);',
+    /* ChromaFlow: 오렌지가 커서 위치에서 발산 (momentum은 JS에서 스무딩) */
+    '  vec2 P=vec2(uv.x*ar,uv.y);',
+    '  vec2 M=vec2(u_mouse.x*ar,u_mouse.y);',
+    '  float d=distance(P,M);',
+    '  float glow=smoothstep(0.62,0.0,d);',
     '  float flow=sin(t2+uv.x*3.5+uv.y*2.1)*0.5+0.5;',
     '  flow=mix(flow,sin(t2*0.7+uv.x*ar*2.1+uv.y*3.5)*0.5+0.5,0.4);',
-    '  col=mix(col,vec3(1.0,0.373,0.012),edge*0.08*flow);',
+    '  col=mix(col,vec3(1.0,0.373,0.012),glow*0.20*flow);',
     '  return col;',
     '}',
     'void main(){',
@@ -695,9 +698,13 @@
     '  float ar=u_res.x/u_res.y;',
     '  float a=radians(31.0);',
     '  vec2 perp=vec2(-sin(a),cos(a));',            /* 릿지 가로질러 */
+    '  vec2 fdir=vec2(cos(a),sin(a));',             /* 릿지 따라 */
     '  vec2 pc=vec2(uv.x*ar,uv.y);',
     '  float coord=dot(pc,perp);',
-    '  float base=coord*6.0+u_t*0.15;',             /* 넓은 패널, speed=0.15 */
+    '  float along=dot(pc,fdir);',
+    /* 물결: 직선 릿지를 sine+FBM으로 휘어 흐르는 물결로 */
+    '  float warp=0.13*sin(along*2.3-u_t*0.30)+0.08*fbm(pc*1.3+vec2(u_t*0.10,u_t*0.04));',
+    '  float base=(coord+warp)*5.5+u_t*0.15;',      /* 물결 패널, speed=0.15 */
     /* 채널별 위상 오프셋 → 색수차(가장자리 이리데선트 무지개) aberration=0.61 */
     '  float abp=0.61*0.17;',
     '  float phG=fract(base);',
@@ -734,6 +741,7 @@
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
   var loc = gl.getAttribLocation(pr, 'p');
   var uRes = gl.getUniformLocation(pr, 'u_res'), uT = gl.getUniformLocation(pr, 'u_t');
+  var uMouse = gl.getUniformLocation(pr, 'u_mouse');
 
   var dpr = Math.min(window.devicePixelRatio || 1, 2);
   function size() {
@@ -743,12 +751,23 @@
   }
   size(); window.addEventListener('resize', size);
 
+  // 커서 추적(정규화 0..1) — momentum으로 부드럽게 따라감
+  var mx = 0.5, my = 0.5, tmx = 0.5, tmy = 0.5;
+  window.addEventListener('pointermove', function (ev) {
+    var r = root.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    tmx = (ev.clientX - r.left) / r.width;
+    tmy = 1.0 - (ev.clientY - r.top) / r.height;   /* uv.y는 하단 기준 */
+  }, { passive: true });
+
   var t0 = performance.now(), raf;
   function frame(now) {
     var e = (now - t0) / 1000;
+    mx += (tmx - mx) * 0.05; my += (tmy - my) * 0.05;   /* momentum follow */
     gl.useProgram(pr); gl.bindBuffer(gl.ARRAY_BUFFER, b);
     gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     gl.uniform2f(uRes, canvas.width, canvas.height); gl.uniform1f(uT, e);
+    gl.uniform2f(uMouse, mx, my);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     raf = requestAnimationFrame(frame);
   }
