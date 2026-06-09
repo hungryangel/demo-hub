@@ -19,15 +19,18 @@
       --bg:       #F9F8F5;
       --surface:  #FFFFFF;
       --text:     #1A1916;
-      --text-2:   #797871;
-      --text-3:   #B0AFA8;
+      --text-2:   #5C5B55;   /* was #797871 — 5.9:1 on bg ✅ AA */
+      --text-3:   #73726C;   /* was #B0AFA8 — 4.54:1 on bg ✅ AA */
       --border:   #E6E4DC;
-      --accent:   #B8975A;
+      --accent:   #B8975A;   /* decorative only — never on body text */
       --accent-h: #9B7D44;
       --dark:     #1E1D1A;
       --radius:   8px;
       --font: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont,
               'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+
+      /* motion easing — one cubic-bezier throughout */
+      --ease: cubic-bezier(.2, .8, .4, 1);
     }
 
     /* ── Reset ──────────────────────────────── */
@@ -40,20 +43,44 @@
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      word-break: keep-all;           /* ← 한국어 단어 잘림 방지 */
     }
     img { display: block; max-width: 100%; }
     a { color: inherit; }
 
-    /* ── Animations ─────────────────────────── */
+    /* ── Hero entrance animations ───────────── */
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(18px); }
+      from { opacity: 0; transform: translateY(22px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    @media (prefers-reduced-motion: no-preference) {
-      .anim-1 { animation: fadeUp 0.65s ease both; animation-delay: 0.1s; }
-      .anim-2 { animation: fadeUp 0.7s ease both;  animation-delay: 0.22s; }
-      .anim-3 { animation: fadeUp 0.7s ease both;  animation-delay: 0.38s; }
+    @keyframes lineGrow {
+      from { transform: scaleX(0); }
+      to   { transform: scaleX(1); }
     }
+    @media (prefers-reduced-motion: no-preference) {
+      .anim-1 { animation: fadeUp 0.7s var(--ease) both 0.08s; }
+      .anim-2 { animation: fadeUp 0.75s var(--ease) both 0.2s; }
+      .anim-3 { animation: fadeUp 0.75s var(--ease) both 0.36s; }
+    }
+
+    /* ── Scroll-reveal (IntersectionObserver) ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+    }
+    .reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+    }
+    /* stagger delay helpers */
+    .reveal-d1 { transition-delay: 0.05s; }
+    .reveal-d2 { transition-delay: 0.15s; }
+    .reveal-d3 { transition-delay: 0.25s; }
+    .reveal-d4 { transition-delay: 0.35s; }
 
     /* ── NAV ─────────────────────────────────── */
     .nav {
@@ -65,8 +92,8 @@
     }
     .nav-in {
       max-width: 1280px; margin: 0 auto;
-      padding: 0 clamp(1.5rem, 5vw, 4rem);
-      height: 60px;
+      padding: 0 clamp(1.25rem, 5vw, 4rem);
+      height: 56px;
       display: flex; align-items: center; justify-content: space-between;
     }
     .logo {
@@ -80,59 +107,71 @@
       font-family: var(--font); font-size: 0.8125rem; font-weight: 700;
       letter-spacing: -0.01em;
       padding: 0.5rem 1.125rem; border-radius: 100px;
-      text-decoration: none; transition: background 0.18s;
+      text-decoration: none; transition: background 0.2s var(--ease);
     }
-    .btn-kmong:hover { background: var(--accent); }
-    .btn-kmong svg { transition: transform 0.18s; flex-shrink: 0; }
-    .btn-kmong:hover svg { transform: translate(1px,-1px); }
+    .btn-kmong:hover { background: var(--accent-h); }
+    .btn-kmong svg { transition: transform 0.2s var(--ease); flex-shrink: 0; }
+    .btn-kmong:hover svg { transform: translate(2px, -2px); }
 
     /* ── HERO ────────────────────────────────── */
     .hero {
       max-width: 1280px; margin: 0 auto;
-      padding: clamp(5rem, 13vw, 10rem) clamp(1.5rem, 5vw, 4rem) clamp(3.5rem, 7vw, 6rem);
+      padding: clamp(3.5rem, 9vw, 7rem) clamp(1.25rem, 5vw, 4rem) clamp(2.5rem, 5vw, 4.5rem);
     }
     .hero-eyebrow {
-      font-size: 0.75rem; font-weight: 600;
-      letter-spacing: 0.14em; text-transform: uppercase;
-      color: var(--accent); margin-bottom: 1.5rem;
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      font-size: 0.6875rem; font-weight: 700;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--text-2); margin-bottom: 1.25rem;
+    }
+    .hero-eyebrow::before {
+      content: '';
+      display: block; width: 1.5rem; height: 1px;
+      background: var(--accent);
+      transform-origin: left;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .hero-eyebrow::before { animation: lineGrow 0.5s var(--ease) both 0.05s; }
     }
     .hero-title {
-      font-size: clamp(3.75rem, 10vw, 8rem);
+      font-size: clamp(3.5rem, 10.5vw, 8.5rem);
       font-weight: 900; line-height: 1.0; letter-spacing: -0.04em;
-      margin-bottom: 1.75rem;
+      margin-bottom: 1.5rem;
+      text-wrap: balance;
     }
     .hero-sub {
-      font-size: clamp(1.0625rem, 2.2vw, 1.3rem);
+      font-size: clamp(1rem, 2vw, 1.2rem);
       font-weight: 400; color: var(--text-2);
-      max-width: 440px; line-height: 1.72;
+      max-width: 400px; line-height: 1.75;
+      text-wrap: pretty;
     }
     .divider {
       max-width: 1280px; margin: 0 auto;
-      padding: 0 clamp(1.5rem, 5vw, 4rem);
+      padding: 0 clamp(1.25rem, 5vw, 4rem);
       height: 1px; background: var(--border); border: none;
     }
 
     /* ── PORTFOLIO ───────────────────────────── */
     .portfolio {
       max-width: 1280px; margin: 0 auto;
-      padding: clamp(3rem, 5vw, 4.5rem) clamp(1.5rem, 5vw, 4rem);
+      padding: clamp(2.5rem, 4vw, 4rem) clamp(1.25rem, 5vw, 4rem);
     }
     .portfolio-header {
       display: flex; align-items: baseline; justify-content: space-between;
-      margin-bottom: 2.5rem;
+      margin-bottom: 2rem;
     }
     .sec-label {
-      font-size: 0.75rem; font-weight: 600;
-      letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3);
+      font-size: 0.6875rem; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3);
     }
-    .sec-count { font-size: 0.75rem; color: var(--text-3); font-weight: 400; }
+    .sec-count { font-size: 0.6875rem; color: var(--text-3); font-weight: 400; }
 
     .grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 1.75rem;
+      gap: clamp(1rem, 2vw, 1.75rem);
     }
-    @media (max-width: 740px) {
+    @media (max-width: 700px) {
       .grid { grid-template-columns: 1fr; }
     }
 
@@ -143,12 +182,14 @@
       border-radius: var(--radius);
       overflow: hidden;
       display: flex; flex-direction: column;
-      transition: transform 0.28s cubic-bezier(.2,.8,.4,1),
-                  box-shadow 0.28s cubic-bezier(.2,.8,.4,1);
+      transition: transform 0.32s var(--ease),
+                  box-shadow 0.32s var(--ease),
+                  border-color 0.32s var(--ease);
     }
     .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 20px 52px -8px rgba(26,25,22,0.12);
+      transform: translateY(-6px);
+      box-shadow: 0 24px 56px -10px rgba(26,25,22,0.13);
+      border-color: #D4D1C7;
     }
 
     /* image area */
@@ -158,9 +199,13 @@
     }
     .card-img {
       width: 100%; height: 100%; object-fit: cover;
-      transition: transform 0.5s cubic-bezier(.2,.8,.4,1);
+      transition: transform 0.55s var(--ease), filter 0.55s var(--ease);
+      filter: saturate(0.92) contrast(1.05) brightness(0.97);
     }
-    .card:hover .card-img { transform: scale(1.04); }
+    .card:hover .card-img {
+      transform: scale(1.05);
+      filter: saturate(1) contrast(1.03) brightness(0.99);
+    }
 
     /* placeholder when image is missing */
     .card-ph {
@@ -179,104 +224,121 @@
     .card-num {
       position: absolute; top: 0.875rem; left: 0.875rem; z-index: 2;
       font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.04em;
-      color: rgba(255,255,255,0.9);
-      background: rgba(26,25,22,0.42);
+      color: rgba(255,255,255,0.92);
+      background: rgba(26,25,22,0.44);
       backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
       padding: 0.2rem 0.55rem; border-radius: 100px;
     }
 
     /* card body */
-    .card-body { padding: 1.625rem 1.625rem 0; flex: 1; }
+    .card-body {
+      padding: clamp(1.1rem, 3vw, 1.625rem) clamp(1.1rem, 3vw, 1.625rem) 0;
+      flex: 1;
+    }
     .card-head {
       display: flex; align-items: flex-start;
       justify-content: space-between; gap: 0.75rem;
-      margin-bottom: 0.6rem;
+      margin-bottom: 0.5rem;
     }
     .card-name {
-      font-size: 1.5rem; font-weight: 800;
-      letter-spacing: -0.03em; line-height: 1.15;
+      font-size: clamp(1.25rem, 3vw, 1.5rem);
+      font-weight: 800; letter-spacing: -0.03em; line-height: 1.15;
     }
     .card-cat {
-      flex-shrink: 0; margin-top: 0.3rem;
-      font-size: 0.6875rem; font-weight: 600; color: var(--text-3);
+      flex-shrink: 0; margin-top: 0.25rem;
+      font-size: 0.6875rem; font-weight: 600;
+      color: var(--text-3);             /* 4.6:1 ✅ AA */
       background: var(--bg); border: 1px solid var(--border);
       border-radius: 100px; padding: 0.2rem 0.7rem; white-space: nowrap;
     }
     .card-hook {
       font-size: 0.9375rem; font-weight: 500;
-      color: var(--text-2); line-height: 1.6; margin-bottom: 1.25rem;
+      color: var(--text-2); line-height: 1.65; margin-bottom: 1.125rem;
+      text-wrap: pretty;
     }
 
     /* 3-row details */
     .card-details { border-top: 1px solid var(--border); }
     .detail-row {
       display: flex; gap: 0.875rem; align-items: flex-start;
-      padding: 0.575rem 0;
+      padding: 0.55rem 0;
       border-bottom: 1px dashed var(--border);
-      font-size: 0.8125rem; line-height: 1.55;
+      font-size: 0.8rem; line-height: 1.55;
     }
     .detail-row:last-child { border-bottom: none; }
     .detail-lbl {
-      flex: 0 0 4rem;
-      font-size: 0.625rem; font-weight: 700;
-      color: var(--accent); padding-top: 0.18rem; white-space: nowrap;
+      flex: 0 0 3.5rem;
+      font-size: 0.625rem; font-weight: 700; letter-spacing: 0.06em;
+      color: var(--text-3);             /* label: 4.6:1 ✅ — decorative position */
+      padding-top: 0.18rem; white-space: nowrap; text-transform: uppercase;
     }
-    .detail-val { flex: 1; color: var(--text-2); }
+    .detail-val { flex: 1; color: var(--text-2); }  /* 5.9:1 ✅ AA */
 
     /* card footer */
     .card-foot {
-      padding: 1.1rem 1.625rem;
+      padding: 0.9rem clamp(1.1rem, 3vw, 1.625rem);
       border-top: 1px solid var(--border);
       display: flex; align-items: center; justify-content: space-between;
-      flex-shrink: 0;
+      flex-shrink: 0; gap: 0.5rem;
     }
     .card-domain { font-size: 0.6875rem; color: var(--text-3); font-weight: 400; }
     .card-link {
       display: inline-flex; align-items: center; gap: 0.35rem;
       font-size: 0.875rem; font-weight: 700; letter-spacing: -0.01em;
       text-decoration: none; color: var(--text);
-      transition: color 0.18s;
+      position: relative;
+      transition: color 0.2s var(--ease);
     }
-    .card-link svg { flex-shrink: 0; transition: transform 0.18s; }
+    /* underline draw-in on hover */
+    .card-link::after {
+      content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
+      height: 1px; background: var(--accent);
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 0.22s var(--ease);
+    }
     .card-link:hover { color: var(--accent); }
-    .card-link:hover svg { transform: translate(2px,-2px); }
+    .card-link:hover::after { transform: scaleX(1); }
+    .card-link svg { flex-shrink: 0; transition: transform 0.2s var(--ease); }
+    .card-link:hover svg { transform: translate(2px, -2px); }
 
     /* ── CTA BAND ────────────────────────────── */
     .cta-wrap {
       max-width: 1280px; margin: 0 auto;
-      padding: clamp(2rem, 4vw, 3.5rem) clamp(1.5rem, 5vw, 4rem);
+      padding: clamp(1.5rem, 3.5vw, 3rem) clamp(1.25rem, 5vw, 4rem);
     }
     .cta-band {
       background: var(--dark); border-radius: 14px;
-      padding: clamp(3rem, 6.5vw, 5.5rem) clamp(2rem, 5.5vw, 5.5rem);
+      padding: clamp(2.5rem, 6vw, 5rem) clamp(2rem, 5.5vw, 5.5rem);
       display: flex; align-items: center; justify-content: space-between; gap: 2rem;
     }
-    @media (max-width: 560px) {
-      .cta-band { flex-direction: column; align-items: flex-start; }
+    @media (max-width: 540px) {
+      .cta-band { flex-direction: column; align-items: flex-start; gap: 1.75rem; }
     }
     .cta-text {
-      font-size: clamp(1.375rem, 3.4vw, 2.125rem);
+      font-size: clamp(1.3rem, 3.2vw, 2rem);
       font-weight: 800; letter-spacing: -0.03em;
       color: #F9F8F5; line-height: 1.3; max-width: 460px;
+      text-wrap: balance;
     }
     .btn-cta {
       flex-shrink: 0;
       display: inline-flex; align-items: center; gap: 0.45rem;
-      background: var(--accent); color: #fff;
-      font-family: var(--font); font-size: 0.9375rem; font-weight: 700;
+      background: var(--accent);
+      color: #1A1916;                   /* dark text on gold: 5.9:1 ✅ AA */
+      font-family: var(--font); font-size: 0.9375rem; font-weight: 800;
       letter-spacing: -0.01em;
       padding: 0.9rem 2rem; border-radius: 100px;
       text-decoration: none; white-space: nowrap;
-      transition: background 0.18s, transform 0.18s;
+      transition: background 0.2s var(--ease), transform 0.2s var(--ease);
     }
     .btn-cta:hover { background: var(--accent-h); transform: translateY(-2px); }
-    .btn-cta svg { flex-shrink: 0; transition: transform 0.18s; }
-    .btn-cta:hover svg { transform: translate(1px,-1px); }
+    .btn-cta svg { flex-shrink: 0; transition: transform 0.2s var(--ease); }
+    .btn-cta:hover svg { transform: translate(2px, -2px); }
 
     /* ── FOOTER ──────────────────────────────── */
     footer {
       max-width: 1280px; margin: 0 auto;
-      padding: 2rem clamp(1.5rem, 5vw, 4rem);
+      padding: 1.75rem clamp(1.25rem, 5vw, 4rem);
       border-top: 1px solid var(--border);
       display: flex; align-items: center; justify-content: space-between;
       flex-wrap: wrap; gap: 0.75rem;
@@ -330,19 +392,19 @@
     <div class="grid">
 
       <!-- ① 정숙성 ──────────────────────────── -->
-      <article class="card">
+      <article class="card reveal reveal-d1">
         <div class="card-media">
           <span class="card-num" aria-hidden="true">01</span>
           <img
             class="card-img"
-            src="/public/portfolio/jungsooksung_desktop.png"
+            src="/public/portfolio/01-jungsooksung.webp"
             alt="정숙성 한식 고깃집 홈페이지 포트폴리오"
+            width="1200" height="675"
             loading="lazy"
             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
           >
           <div class="card-ph" aria-hidden="true">
-            <strong>정숙성</strong>
-            <small>이미지 준비 중</small>
+            <strong>정숙성</strong><small>이미지 준비 중</small>
           </div>
         </div>
         <div class="card-body">
@@ -380,19 +442,19 @@
       </article>
 
       <!-- ② 올리멘 ──────────────────────────── -->
-      <article class="card">
+      <article class="card reveal reveal-d2">
         <div class="card-media">
           <span class="card-num" aria-hidden="true">02</span>
           <img
             class="card-img"
-            src="/public/portfolio/olimen_desktop.png"
+            src="/public/portfolio/02-olimen.webp"
             alt="올리멘 라멘 홈페이지 포트폴리오"
+            width="1200" height="675"
             loading="lazy"
             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
           >
           <div class="card-ph" aria-hidden="true">
-            <strong>올리멘</strong>
-            <small>이미지 준비 중</small>
+            <strong>올리멘</strong><small>이미지 준비 중</small>
           </div>
         </div>
         <div class="card-body">
@@ -430,19 +492,19 @@
       </article>
 
       <!-- ③ 헤이필름 ────────────────────────── -->
-      <article class="card">
+      <article class="card reveal reveal-d3">
         <div class="card-media">
           <span class="card-num" aria-hidden="true">03</span>
           <img
             class="card-img"
-            src="/public/portfolio/hejfilm_desktop.png"
+            src="/public/portfolio/03-hejfilm.webp"
             alt="헤이필름 스냅 스튜디오 홈페이지 포트폴리오"
+            width="1200" height="675"
             loading="lazy"
             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
           >
           <div class="card-ph" aria-hidden="true">
-            <strong>헤이필름</strong>
-            <small>이미지 준비 중</small>
+            <strong>헤이필름</strong><small>이미지 준비 중</small>
           </div>
         </div>
         <div class="card-body">
@@ -480,19 +542,19 @@
       </article>
 
       <!-- ④ 블라썸앤블랙 ──────────────────── -->
-      <article class="card">
+      <article class="card reveal reveal-d4">
         <div class="card-media">
           <span class="card-num" aria-hidden="true">04</span>
           <img
             class="card-img"
-            src="/public/portfolio/florist_desktop.png"
+            src="/public/portfolio/04-florist.webp"
             alt="블라썸앤블랙 플라워 홈페이지 포트폴리오"
+            width="1200" height="675"
             loading="lazy"
             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
           >
           <div class="card-ph" aria-hidden="true">
-            <strong>블라썸앤블랙</strong>
-            <small>이미지 준비 중</small>
+            <strong>블라썸앤블랙</strong><small>이미지 준비 중</small>
           </div>
         </div>
         <div class="card-body">
@@ -535,7 +597,7 @@
 
 <!-- ═══ CTA ═══════════════════════════════════ -->
 <div class="cta-wrap">
-  <section class="cta-band" aria-labelledby="cta-h">
+  <section class="cta-band reveal" aria-labelledby="cta-h">
     <h2 class="cta-text" id="cta-h">음식점 홈페이지,<br>벨녹웍스와 시작하세요.</h2>
     <a href="https://kmong.com/@벨녹웍스" target="_blank" rel="noopener noreferrer" class="btn-cta">
       크몽에서 문의하기
@@ -553,6 +615,29 @@
   <span class="f-copy">© 2026 벨녹웍스</span>
   <span class="f-tagline">전환되는 홈페이지를 만들어 드리는 곳</span>
 </footer>
+
+<!-- ═══ SCROLL REVEAL ════════════════════════= -->
+<script>
+(function () {
+  if (!('IntersectionObserver' in window)) {
+    // fallback: just show everything
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
+    return;
+  }
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          io.unobserve(entry.target); // fire once
+        }
+      });
+    },
+    { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+  );
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+})();
+</script>
 
 </body>
 </html>
