@@ -697,22 +697,22 @@
     '  vec2 perp=vec2(-sin(a),cos(a));',            /* 릿지 가로질러 */
     '  vec2 pc=vec2(uv.x*ar,uv.y);',
     '  float coord=dot(pc,perp);',
-    '  float phase=coord*6.5+u_t*0.15;',            /* frequency(넓은 패널), speed=0.15 */
-    '  float ph=fract(phase);',
-    '  float bend=sin(ph*6.2831853);',              /* 둥근 렌즈 기울기 -1..1 */
-    /* 굴절: 베이스를 변위된 uv에서 채널별 재샘플(색수차 0.61) */
-    '  float refr=0.010;',
-    '  float ab=0.61*0.008;',
+    '  float base=coord*6.0+u_t*0.15;',             /* 넓은 패널, speed=0.15 */
+    /* 채널별 위상 오프셋 → 색수차(가장자리 이리데선트 무지개) aberration=0.61 */
+    '  float abp=0.61*0.17;',
+    '  float phG=fract(base);',
+    '  float bR=sin(fract(base+abp)*6.2831853);',
+    '  float bG=sin(phG*6.2831853);',
+    '  float bB=sin(fract(base-abp)*6.2831853);',
+    /* 굴절: 둥근 렌즈가 베이스를 살짝 변위(재샘플) */
     '  vec2 dv=vec2(perp.x/ar,perp.y);',
-    '  vec3 col;',
-    '  col.r=baseScene(uv+dv*(bend*refr+ab)).r;',
-    '  col.g=baseScene(uv+dv*(bend*refr)).g;',
-    '  col.b=baseScene(uv+dv*(bend*refr-ab)).b;',
-    /* 유리 슬랫 입체: lightAngle=-90 → 한쪽 면 하이라이트, 반대 면 그림자 */
-    '  col+=vec3(max(bend,0.0))*0.07;',             /* highlight≈0.12 */
-    '  col*=1.0-max(-bend,0.0)*0.05;',
-    '  float seam=smoothstep(0.46,0.5,abs(ph-0.5));',
-    '  col*=1.0-seam*0.015;',
+    '  vec3 col=baseScene(uv+dv*(bG*0.009));',
+    /* 유리 슬랫 하이라이트(빛 받는 면) — 채널 분리로 가장자리 무지개 프린지 */
+    '  col.r+=max(bR,0.0)*0.085;',
+    '  col.g+=max(bG,0.0)*0.085;',
+    '  col.b+=max(bB,0.0)*0.085;',
+    /* 반대 면 부드러운 그림자(고명도 유지) */
+    '  col*=1.0-max(-bG,0.0)*0.04;',
     /* FilmGrain strength=0.05 */
     '  float grain=h21(uv+fract(vec2(u_t*0.37,u_t*0.61)))*0.05-0.025;',
     '  col+=vec3(grain);',
