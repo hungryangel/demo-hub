@@ -114,8 +114,8 @@
     .btn-kmong:hover svg { transform: translate(2px, -2px); }
 
     /* ── HERO SHADER MOUNT ───────────────────── */
-    /* 원본 velnoc-digital-canvas와 동일한 shaders 패키지 사용
-       (Swirl + ChromaFlow + FlutedGlass + FilmGrain — 로컬 벤더 번들) */
+    /* 히어로 배경: velnoc-digital-canvas 룩의 플루티드 글라스 refraction
+       (WebGL 직접 구현 — Swirl 그라데이션 + 31° 골판 유리 굴절 + 색수차 + 필름그레인) */
     .hero-wrap {
       position: relative;
       overflow: hidden;
@@ -642,55 +642,122 @@
   <span class="f-tagline">전환되는 홈페이지를 만들어 드리는 곳</span>
 </footer>
 
-<!-- ═══ HERO SHADER — 원본 shaders 패키지 그대로 (로컬 벤더링) ══════════════ -->
-<!-- velnoc-digital-canvas의 <Shader> 트리를 1:1로 재현:
-       Swirl + ChromaFlow + FlutedGlass + FilmGrain
-     vendor/shaders-bundle.js = shaders@2.5.128 자체 완결 ESM 번들
-       (three.js 인라인 / 빌드·CDN 런타임 의존 없음) -->
-<script type="module">
-  import { createShader } from './vendor/shaders-bundle.js';
+<!-- ═══ HERO SHADER — 플루티드 글라스 refraction (WebGL · 전 브라우저 호환) ════ -->
+<!-- velnoc-digital-canvas 룩 재현: 31° 대각선 골판 유리가 빛·그라데이션을 굴절시켜
+     밝고 어두운 대각 패널 + 가장자리 색수차(무지개) 생성.
+     ※ 원본 shaders 패키지(WebGPU+three.js)는 빌드 없는 정적 사이트에서 렌더 불가 확인:
+       · React 경로 = react 버전 충돌(useRef null)
+       · 바닐라 WebGPU = ShaderModule 무효, WebGL 폴백 없음 + GLSL 코드생성 문법오류
+     → 동일 비주얼을 WebGL 굴절 셰이더로 직접 구현(굴절·색수차·필름그레인). -->
+<script>
+(function () {
+  'use strict';
+  var root = document.getElementById('hero-shader-root');
+  if (!root) return;
+  var canvas = document.createElement('canvas');
+  canvas.setAttribute('aria-hidden', 'true');
+  canvas.style.cssText = 'position:absolute;inset:0;display:block;width:100%;height:100%';
+  root.appendChild(canvas);
 
-  (async () => {
-    const root = document.getElementById('hero-shader-root');
-    if (!root) return;
+  var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) { canvas.remove(); return; }   // → #EFEFEF 단색 폴백
 
-    const canvas = document.createElement('canvas');
-    canvas.setAttribute('aria-hidden', 'true');
-    root.appendChild(canvas);
+  var VS = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
 
-    // 원본 velnoc-digital-canvas와 100% 동일한 컴포넌트 트리·파라미터
-    const tree = { components: [
-      { type: 'Swirl', props: { colorA: '#ffffff', colorB: '#f0f0f0', detail: 1.7 } },
-      { type: 'ChromaFlow', props: {
-          baseColor: '#ffffff', downColor: '#ff5f03', leftColor: '#ff5f03',
-          rightColor: '#ff5f03', upColor: '#ff5f03', momentum: 13, radius: 3.5 } },
-      { type: 'FlutedGlass', props: {
-          aberration: 0.61, angle: 31, frequency: 8, highlight: 0.12,
-          highlightSoftness: 0, lightAngle: -90, refraction: 4,
-          shape: 'rounded', softness: 1, speed: 0.15 } },
-      { type: 'FilmGrain', props: { strength: 0.05 } },
-    ] };
+  var FS = [
+    'precision highp float;',
+    'uniform vec2 u_res;',
+    'uniform float u_t;',
+    'float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
+    'float n21(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);',
+    ' return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),f.x),f.y);}',
+    'float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n21(p);p=p*2.+vec2(5.2,1.3);a*=.5;}return v;}',
+    /* 베이스 장면: Swirl(#fff→#f0f0f0) + ChromaFlow(엣지 오렌지) */
+    'vec3 baseScene(vec2 uv){',
+    '  float ar=u_res.x/u_res.y;',
+    '  vec2 su=vec2(uv.x*ar,uv.y)*1.7;',
+    '  float t0=u_t*0.05;',
+    '  float f1=fbm(su+t0);',
+    '  float f2=fbm(su-t0*0.7+vec2(4.2,2.3));',
+    '  float sw=fbm(su+vec2(f1,f2)*0.55);',
+    '  vec3 col=mix(vec3(1.0),vec3(0.941),sw*0.85);',
+    '  float t2=u_t*0.10;',
+    '  float ex=min(uv.x,1.-uv.x)/0.10;',
+    '  float ey=min(uv.y,1.-uv.y)/0.10;',
+    '  float edge=1.0-clamp(min(ex,ey),0.,1.);',
+    '  float flow=sin(t2+uv.x*3.5+uv.y*2.1)*0.5+0.5;',
+    '  flow=mix(flow,sin(t2*0.7+uv.x*ar*2.1+uv.y*3.5)*0.5+0.5,0.4);',
+    '  col=mix(col,vec3(1.0,0.373,0.012),edge*0.08*flow);',
+    '  return col;',
+    '}',
+    'void main(){',
+    '  vec2 uv=gl_FragCoord.xy/u_res;',
+    '  float ar=u_res.x/u_res.y;',
+    '  float a=radians(31.0);',
+    '  vec2 perp=vec2(-sin(a),cos(a));',            /* 릿지 가로질러 */
+    '  vec2 pc=vec2(uv.x*ar,uv.y);',
+    '  float coord=dot(pc,perp);',
+    '  float phase=coord*6.5+u_t*0.15;',            /* frequency(넓은 패널), speed=0.15 */
+    '  float ph=fract(phase);',
+    '  float bend=sin(ph*6.2831853);',              /* 둥근 렌즈 기울기 -1..1 */
+    /* 굴절: 베이스를 변위된 uv에서 채널별 재샘플(색수차 0.61) */
+    '  float refr=0.010;',
+    '  float ab=0.61*0.008;',
+    '  vec2 dv=vec2(perp.x/ar,perp.y);',
+    '  vec3 col;',
+    '  col.r=baseScene(uv+dv*(bend*refr+ab)).r;',
+    '  col.g=baseScene(uv+dv*(bend*refr)).g;',
+    '  col.b=baseScene(uv+dv*(bend*refr-ab)).b;',
+    /* 유리 슬랫 입체: lightAngle=-90 → 한쪽 면 하이라이트, 반대 면 그림자 */
+    '  col+=vec3(max(bend,0.0))*0.07;',             /* highlight≈0.12 */
+    '  col*=1.0-max(-bend,0.0)*0.05;',
+    '  float seam=smoothstep(0.46,0.5,abs(ph-0.5));',
+    '  col*=1.0-seam*0.015;',
+    /* FilmGrain strength=0.05 */
+    '  float grain=h21(uv+fract(vec2(u_t*0.37,u_t*0.61)))*0.05-0.025;',
+    '  col+=vec3(grain);',
+    '  gl_FragColor=vec4(clamp(col,0.,1.),1.);',
+    '}'
+  ].join('\n');
 
-    try {
-      const inst = await createShader(canvas, tree);
-      if (inst && inst.resume) inst.resume();
+  function sh(t, s) {
+    var o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o);
+    if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) { console.warn('shader', gl.getShaderInfoLog(o)); return null; }
+    return o;
+  }
+  var vs = sh(gl.VERTEX_SHADER, VS), fs = sh(gl.FRAGMENT_SHADER, FS);
+  if (!vs || !fs) { canvas.remove(); return; }
+  var pr = gl.createProgram(); gl.attachShader(pr, vs); gl.attachShader(pr, fs); gl.linkProgram(pr);
+  if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) { console.warn('link', gl.getProgramInfoLog(pr)); canvas.remove(); return; }
 
-      // 반응형: 컨테이너 크기 변경 시 렌더러 리사이즈
-      let rt;
-      window.addEventListener('resize', () => {
-        clearTimeout(rt);
-        rt = setTimeout(() => {
-          const r = root.getBoundingClientRect();
-          try { inst.resize(r.width, r.height); }
-          catch (e) { try { inst.resize(); } catch (e2) {} }
-        }, 150);
-      });
-    } catch (e) {
-      // WebGPU/WebGL 미지원 등 → #EFEFEF 단색 배경 폴백 (원본과 동일한 배경색)
-      console.warn('[hero] shader init failed → solid #EFEFEF fallback', e);
-      canvas.remove();
-    }
-  })();
+  var b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+  var loc = gl.getAttribLocation(pr, 'p');
+  var uRes = gl.getUniformLocation(pr, 'u_res'), uT = gl.getUniformLocation(pr, 'u_t');
+
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function size() {
+    var w = root.offsetWidth || window.innerWidth, h = root.offsetHeight || 480;
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+  size(); window.addEventListener('resize', size);
+
+  var t0 = performance.now(), raf;
+  function frame(now) {
+    var e = (now - t0) / 1000;
+    gl.useProgram(pr); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+    gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    gl.uniform2f(uRes, canvas.width, canvas.height); gl.uniform1f(uT, e);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    raf = requestAnimationFrame(frame);
+  }
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    frame(performance.now());
+  } else {
+    raf = requestAnimationFrame(frame);
+  }
+})();
 </script>
 
 <!-- ═══ SCROLL REVEAL ════════════════════════= -->
