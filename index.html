@@ -6,7 +6,7 @@
   <title>벨녹웍스 포트폴리오 — 전환되는 홈페이지</title>
   <meta name="description" content="직접 만든 음식점·로컬 브랜드 작업입니다. 벨녹웍스 포트폴리오.">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#F9F8F5">
+  <meta name="theme-color" content="#fafafa">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23ea2804'/><text x='50%25' y='22' text-anchor='middle' font-family='system-ui,sans-serif' font-size='16' font-weight='900' fill='white'>V</text></svg>">
 
   <!-- Pretendard Variable — best Korean web font -->
@@ -16,7 +16,7 @@
   <style>
     /* ── Design tokens — aligned to site.velnoc.com ── */
     :root {
-      --bg:       #f9f7f3;   /* --canvas */
+      --bg:       #fafafa;   /* --canvas — 화이트톤 (기존 린넨 #f9f7f3) */
       --surface:  #ffffff;   /* --card */
       --text:     #202020;   /* --ink */
       --text-2:   #575757;   /* --charcoal  6.75:1 ✅ AA */
@@ -305,30 +305,23 @@
       font-size: 0.875rem; font-weight: 700; letter-spacing: -0.01em;
       text-decoration: none; color: var(--text);
       position: relative;
-      transition: color 0.25s var(--ease), text-shadow 0.25s var(--ease);
+      transition: color 0.22s var(--ease);
     }
-    /* 흐르듯 빛나는 밑줄 (그라데이션 + 글로우) */
+    /* 밑줄: 호버 시 좌→우로 그려짐 (글로우 없이, 글자색과 같은 accent) */
     .card-link::after {
       content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
-      height: 2px; border-radius: 2px;
-      background: linear-gradient(90deg, var(--accent), #ff7a3d, var(--accent));
-      background-size: 200% 100%;
-      box-shadow: 0 0 9px rgba(234,40,4,0.55);
+      height: 2px; background: var(--accent);
       transform: scaleX(0); transform-origin: left;
-      transition: transform 0.3s var(--ease);
+      transition: transform 0.26s var(--ease);
     }
     .card-link svg { flex-shrink: 0; transition: transform 0.2s var(--ease); }
-    /* 직접 링크 호버 + 카드 전체 호버 모두 → '사이트 보기' 글로우 & 흐르는 밑줄 */
+    /* 직접 링크 호버 + 카드 전체 호버 모두 → 글자색·밑줄이 accent로 (글로우 없음) */
     .card-link:hover,
-    .card:hover .card-link { color: var(--accent); text-shadow: 0 0 14px rgba(234,40,4,0.5); }
+    .card:hover .card-link { color: var(--accent); }
     .card-link:hover::after,
-    .card:hover .card-link::after { transform: scaleX(1); animation: lineFlow 1.6s linear infinite; }
+    .card:hover .card-link::after { transform: scaleX(1); }
     .card-link:hover svg,
     .card:hover .card-link svg { transform: translate(2px, -2px); }
-    @keyframes lineFlow { to { background-position: -200% 0; } }
-    @media (prefers-reduced-motion: reduce) {
-      .card-link:hover::after, .card:hover .card-link::after { animation: none; }
-    }
 
     /* ── CTA BAND ────────────────────────────── */
     .cta-wrap {
