@@ -17,6 +17,9 @@
 
   <!-- Pretendard Variable — best Korean web font -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <!-- 가변폰트 woff2 선로딩 → 체감 로드 속도 ↑ (Pretendard CSS는 font-display:swap) -->
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+        href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/woff2/PretendardVariable.woff2">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable.min.css">
 
   <style>
@@ -295,24 +298,24 @@
     }
     .card-hook {
       font-size: 0.9375rem; font-weight: 500;
-      color: var(--text-2); line-height: 1.65; margin-bottom: 1.125rem;
+      color: var(--text-2); line-height: 1.65; margin-bottom: 1.375rem;
       text-wrap: pretty;
     }
 
-    /* 3-row details */
-    .card-details { border-top: 1px solid var(--border); }
+    /* 3-row details — 스펙시트형, 여백으로 숨쉬게 */
+    .card-details { border-top: 1px solid var(--border); margin-top: 0.25rem; }
     .detail-row {
-      display: flex; gap: 0.875rem; align-items: flex-start;
-      padding: 0.55rem 0;
-      border-bottom: 1px dashed var(--border);
-      font-size: 0.8rem; line-height: 1.55;
+      display: flex; gap: 1.15rem; align-items: flex-start;
+      padding: 0.72rem 0;
+      border-bottom: 1px dashed rgba(32,32,32,0.10);
+      font-size: 0.8rem; line-height: 1.62;
     }
     .detail-row:last-child { border-bottom: none; }
     .detail-lbl {
-      flex: 0 0 3.5rem;
+      flex: 0 0 3.6rem;
       font-size: 0.625rem; font-weight: 700; letter-spacing: 0.06em;
       color: var(--text-3);             /* label: 4.6:1 ✅ — decorative position */
-      padding-top: 0.18rem; white-space: nowrap; text-transform: uppercase;
+      padding-top: 0.22rem; white-space: nowrap; text-transform: uppercase;
     }
     .detail-val { flex: 1; color: var(--text-2); }  /* 5.9:1 ✅ AA */
 
@@ -362,6 +365,19 @@
     }
     @media (max-width: 540px) {
       .cta-band { flex-direction: column; align-items: flex-start; gap: 1.75rem; }
+    }
+
+    /* ── 모바일 전용 설계 (≤560px) — '줄이기'가 아닌 별도 결정 ── */
+    @media (max-width: 560px) {
+      .hero { padding-top: clamp(2.5rem, 10vw, 3.5rem); padding-bottom: 2.25rem; }
+      .hero-sub { max-width: 100%; }
+      .portfolio { padding-top: 1.75rem; }
+      .portfolio-header { margin-bottom: 1.5rem; }
+      .card-hook { font-size: 1rem; line-height: 1.6; }        /* 핵심 카피 가독성 ↑ */
+      .detail-row { font-size: 0.82rem; padding: 0.68rem 0; gap: 1rem; }
+      .detail-lbl { flex-basis: 3.2rem; }
+      .card-foot { padding-top: 1rem; padding-bottom: 1rem; }  /* 탭 타깃 ≥44px */
+      .card-link { padding: 0.3rem 0; }
     }
     .cta-text {
       font-size: clamp(1.3rem, 3.2vw, 2rem);
