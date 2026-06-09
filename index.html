@@ -126,34 +126,35 @@
     .hero-wrap {
       position: relative;
       overflow: hidden;
-      background: var(--bg);
+      /* 원본 velnoc-digital-canvas #EFEFEF에 근접한 쿨 라이트 그레이
+         (--bg #f9f7f3보다 살짝 더 중성 → 릿지 명암 대비 확보) */
+      background: #edebe7;
     }
     .fluted-bg {
       position: absolute;
-      /* extend beyond bounds so drifting doesn't show edges */
       inset: -8%;
       width: 116%; height: 116%;
       pointer-events: none;
       z-index: 0;
       background:
-        /* ChromaFlow: warm red glow at lower-right (brand accent hint) */
-        radial-gradient(ellipse 75% 55% at 88% 115%, rgba(234,40,4,0.045) 0%, transparent 62%),
-        /* FilmGrain approximation: very subtle noise via micro-gradient */
-        repeating-linear-gradient(
-          0deg,
-          rgba(0,0,0,0.008) 0px, rgba(0,0,0,0) 2px
-        ),
-        /* FlutedGlass angle=31, frequency=8, highlight=0.12 */
+        /* ChromaFlow: 브랜드 레드 그로우 */
+        radial-gradient(ellipse 90% 60% at 92% 120%, rgba(234,40,4,0.07) 0%, transparent 60%),
+        /* FlutedGlass angle=31, frequency≈8
+           골 그림자(leading) + 투명 중간 + 피크 하이라이트(trailing) */
         repeating-linear-gradient(
           148deg,
-          rgba(255,255,255,0)    0px,
-          rgba(255,255,255,0)    108px,
-          rgba(255,255,255,0.62) 108px,
-          rgba(255,255,255,0.62) 111px,
-          rgba(255,255,255,0.22) 111px,
-          rgba(255,255,255,0.22) 115px,
-          rgba(255,255,255,0)    115px,
-          rgba(255,255,255,0)    220px
+          rgba(20,18,14,0.11)  0px,
+          rgba(20,18,14,0.11)  12px,
+          rgba(20,18,14,0.04)  12px,
+          rgba(20,18,14,0.04)  26px,
+          rgba(20,18,14,0)     26px,
+          rgba(20,18,14,0)     78px,
+          rgba(255,255,255,0.90) 78px,
+          rgba(255,255,255,0.90) 85px,
+          rgba(255,255,255,0.38) 85px,
+          rgba(255,255,255,0.38) 94px,
+          rgba(255,255,255,0)    94px,
+          rgba(255,255,255,0)    164px
         );
       animation: sheenDrift 16s ease-in-out infinite;
     }
