@@ -7,7 +7,7 @@
   <meta name="description" content="직접 만든 음식점·로컬 브랜드 작업입니다. 벨녹웍스 포트폴리오.">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#F9F8F5">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23B8975A'/><text x='50%25' y='22' text-anchor='middle' font-family='system-ui,sans-serif' font-size='16' font-weight='900' fill='white'>V</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23ea2804'/><text x='50%25' y='22' text-anchor='middle' font-family='system-ui,sans-serif' font-size='16' font-weight='900' fill='white'>V</text></svg>">
 
   <!-- Pretendard Variable — best Korean web font -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -113,8 +113,57 @@
     .btn-kmong svg { transition: transform 0.2s var(--ease); flex-shrink: 0; }
     .btn-kmong:hover svg { transform: translate(2px, -2px); }
 
+    /* ── HERO FLUTED-GLASS BACKGROUND ───────── */
+    /* Replicates velnoc-digital-canvas FlutedGlass(angle=31) + ChromaFlow + FilmGrain
+       using pure CSS — no JS/WebGL dependency */
+    @keyframes sheenDrift {
+      0%   { transform: translateX(0px)  translateY(0px); }
+      25%  { transform: translateX(22px) translateY(-14px); }
+      50%  { transform: translateX(10px) translateY(-26px); }
+      75%  { transform: translateX(-12px) translateY(-14px); }
+      100% { transform: translateX(0px)  translateY(0px); }
+    }
+    .hero-wrap {
+      position: relative;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    .fluted-bg {
+      position: absolute;
+      /* extend beyond bounds so drifting doesn't show edges */
+      inset: -8%;
+      width: 116%; height: 116%;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        /* ChromaFlow: warm red glow at lower-right (brand accent hint) */
+        radial-gradient(ellipse 75% 55% at 88% 115%, rgba(234,40,4,0.045) 0%, transparent 62%),
+        /* FilmGrain approximation: very subtle noise via micro-gradient */
+        repeating-linear-gradient(
+          0deg,
+          rgba(0,0,0,0.008) 0px, rgba(0,0,0,0) 2px
+        ),
+        /* FlutedGlass angle=31, frequency=8, highlight=0.12 */
+        repeating-linear-gradient(
+          148deg,
+          rgba(255,255,255,0)    0px,
+          rgba(255,255,255,0)    108px,
+          rgba(255,255,255,0.62) 108px,
+          rgba(255,255,255,0.62) 111px,
+          rgba(255,255,255,0.22) 111px,
+          rgba(255,255,255,0.22) 115px,
+          rgba(255,255,255,0)    115px,
+          rgba(255,255,255,0)    220px
+        );
+      animation: sheenDrift 16s ease-in-out infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .fluted-bg { animation: none; }
+    }
+
     /* ── HERO ────────────────────────────────── */
     .hero {
+      position: relative; z-index: 1;
       max-width: 1280px; margin: 0 auto;
       padding: clamp(3.5rem, 9vw, 7rem) clamp(1.25rem, 5vw, 4rem) clamp(2.5rem, 5vw, 4.5rem);
     }
@@ -373,10 +422,14 @@
 
 <!-- ═══ HERO ══════════════════════════════════ -->
 <header>
-  <div class="hero">
-    <p class="hero-eyebrow anim-1">벨녹웍스 포트폴리오</p>
-    <h1 class="hero-title anim-2">말보다,<br>결과로.</h1>
-    <p class="hero-sub anim-3">직접 만든 음식점·로컬 브랜드 작업입니다.</p>
+  <div class="hero-wrap">
+    <!-- Fluted-glass background (CSS replica of velnoc-digital-canvas shader) -->
+    <div class="fluted-bg" aria-hidden="true"></div>
+    <div class="hero">
+      <p class="hero-eyebrow anim-1">벨녹웍스 포트폴리오</p>
+      <h1 class="hero-title anim-2">말보다,<br>결과로.</h1>
+      <p class="hero-sub anim-3">직접 만든 음식점·로컬 브랜드 작업입니다.</p>
+    </div>
   </div>
   <hr class="divider" aria-hidden="true">
 </header>
