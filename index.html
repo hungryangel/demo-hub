@@ -113,53 +113,25 @@
     .btn-kmong svg { transition: transform 0.2s var(--ease); flex-shrink: 0; }
     .btn-kmong:hover svg { transform: translate(2px, -2px); }
 
-    /* ── HERO FLUTED-GLASS BACKGROUND ───────── */
-    /* Replicates velnoc-digital-canvas FlutedGlass(angle=31) + ChromaFlow + FilmGrain
-       using pure CSS — no JS/WebGL dependency */
-    @keyframes sheenDrift {
-      0%   { transform: translateX(0px)  translateY(0px); }
-      25%  { transform: translateX(22px) translateY(-14px); }
-      50%  { transform: translateX(10px) translateY(-26px); }
-      75%  { transform: translateX(-12px) translateY(-14px); }
-      100% { transform: translateX(0px)  translateY(0px); }
-    }
+    /* ── HERO SHADER MOUNT ───────────────────── */
+    /* 원본 velnoc-digital-canvas와 동일한 shaders 패키지 사용
+       (Swirl + ChromaFlow + FlutedGlass + FilmGrain via esm.sh CDN) */
     .hero-wrap {
       position: relative;
       overflow: hidden;
-      /* 원본 velnoc-digital-canvas #EFEFEF에 근접한 쿨 라이트 그레이
-         (--bg #f9f7f3보다 살짝 더 중성 → 릿지 명암 대비 확보) */
-      background: #edebe7;
+      background: #EFEFEF; /* 원본과 동일한 fallback 배경 */
     }
-    .fluted-bg {
+    #hero-shader-root {
       position: absolute;
-      inset: -8%;
-      width: 116%; height: 116%;
-      pointer-events: none;
+      inset: 0;
       z-index: 0;
-      background:
-        /* ChromaFlow: 브랜드 레드 그로우 */
-        radial-gradient(ellipse 90% 60% at 92% 120%, rgba(234,40,4,0.07) 0%, transparent 60%),
-        /* FlutedGlass angle=31, frequency≈8
-           골 그림자(leading) + 투명 중간 + 피크 하이라이트(trailing) */
-        repeating-linear-gradient(
-          148deg,
-          rgba(20,18,14,0.11)  0px,
-          rgba(20,18,14,0.11)  12px,
-          rgba(20,18,14,0.04)  12px,
-          rgba(20,18,14,0.04)  26px,
-          rgba(20,18,14,0)     26px,
-          rgba(20,18,14,0)     78px,
-          rgba(255,255,255,0.90) 78px,
-          rgba(255,255,255,0.90) 85px,
-          rgba(255,255,255,0.38) 85px,
-          rgba(255,255,255,0.38) 94px,
-          rgba(255,255,255,0)    94px,
-          rgba(255,255,255,0)    164px
-        );
-      animation: sheenDrift 16s ease-in-out infinite;
+      pointer-events: none;
     }
-    @media (prefers-reduced-motion: reduce) {
-      .fluted-bg { animation: none; }
+    /* shader가 로드되기 전 깜빡임 방지 */
+    #hero-shader-root canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
     }
 
     /* ── HERO ────────────────────────────────── */
@@ -424,8 +396,8 @@
 <!-- ═══ HERO ══════════════════════════════════ -->
 <header>
   <div class="hero-wrap">
-    <!-- Fluted-glass background (CSS replica of velnoc-digital-canvas shader) -->
-    <div class="fluted-bg" aria-hidden="true"></div>
+    <!-- shaders 패키지 마운트 포인트 (velnoc-digital-canvas 원본 동일) -->
+    <div id="hero-shader-root" aria-hidden="true"></div>
     <div class="hero">
       <p class="hero-eyebrow anim-1">벨녹웍스 포트폴리오</p>
       <h1 class="hero-title anim-2">말보다,<br>결과로.</h1>
@@ -669,6 +641,159 @@
   <span class="f-copy">© 2026 벨녹웍스</span>
   <span class="f-tagline">전환되는 홈페이지를 만들어 드리는 곳</span>
 </footer>
+
+<!-- ═══ HERO SHADER — WebGL GLSL (velnoc-digital-canvas 원본 파라미터 1:1) ══ -->
+<!-- Swirl(colorA=#fff,colorB=#f0f0f0,detail=1.7)
+     ChromaFlow(baseColor=#fff,edges=#ff5f03,momentum=13,radius=3.5)
+     FlutedGlass(aberration=0.61,angle=31,frequency=8,highlight=0.12,
+                 highlightSoftness=0,lightAngle=-90,refraction=4,shape=rounded,
+                 softness=1,speed=0.15)
+     FilmGrain(strength=0.05) -->
+<script>
+(function () {
+  'use strict';
+  var mount = document.getElementById('hero-shader-root');
+  if (!mount) return;
+
+  var canvas = document.createElement('canvas');
+  canvas.setAttribute('aria-hidden', 'true');
+  canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none';
+  mount.appendChild(canvas);
+
+  var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) return; // CSS 폴백으로 충분
+
+  var VS = [
+    'attribute vec2 a_p;',
+    'void main(){gl_Position=vec4(a_p,0.,1.);}'
+  ].join('\n');
+
+  var FS = [
+    'precision highp float;',
+    'uniform vec2 u_res;',
+    'uniform float u_t;',
+
+    /* ── hash / noise ── */
+    'float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
+    'float n21(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);',
+    '  return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),f.x),f.y);}',
+    'float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n21(p);p=p*2.+vec2(5.2,1.3);a*=.5;}return v;}',
+
+    'void main(){',
+    '  vec2 uv=gl_FragCoord.xy/u_res;',
+    '  float ar=u_res.x/u_res.y;',
+
+    /* ── 1. SWIRL: colorA=#fff, colorB=#f0f0f0, detail=1.7 ── */
+    '  vec2 su=vec2(uv.x*ar,uv.y)*1.7;',
+    '  float t0=u_t*0.05;',
+    '  float f1=fbm(su+t0);',
+    '  float f2=fbm(su-t0*.7+vec2(4.2,2.3));',
+    '  float sw=fbm(su+vec2(f1,f2)*.55);',
+    '  vec3 col=mix(vec3(1.),vec3(.941,.941,.941),sw*.75);',
+
+    /* ── 2. FLUTED GLASS: angle=31, freq=8, highlight=0.12,
+            highlightSoftness=0, lightAngle=-90, refraction=4,
+            aberration=0.61, shape=rounded, softness=1, speed=0.15 ── */
+    '  float rad31=radians(31.);',
+    '  vec2 fPerp=vec2(-sin(rad31),cos(rad31));',  /* across ridges */
+    '  float proj=dot(uv,fPerp);',
+    '  float phase=proj*8.+u_t*0.15;',            /* freq=8, speed=0.15 */
+    '  float fT=fract(phase);',
+    /* rounded profile: smooth sine bump */
+    '  float profile=sin(fT*3.14159265);',         /* 0→peak→0 */
+    '  float deriv=cos(fT*3.14159265);',           /* slope of profile */
+    /* lightAngle=-90 → light from top-right, creates highlight at ridge peak */
+    '  float fHL=step(.88,fT)*.12;',              /* highlight=0.12, highlightSoftness=0 */
+    '  float fShadow=(1.-profile)*.022;',
+    '  col+=vec3(fHL)-vec3(fShadow);',
+    /* chromatic aberration: 0.61 → subtle R/B split at ridge edge */
+    '  float ab=0.61*0.0006;',
+    '  float rT=fract(phase+ab*8.);',
+    '  float bT=fract(phase-ab*8.);',
+    '  col.r+=step(.88,rT)*.035;',
+    '  col.b+=step(.88,bT)*.035;',
+
+    /* ── 3. CHROMAFLOW: baseColor=#fff, edges=#ff5f03,
+            momentum=13, radius=3.5 ── */
+    '  float t2=u_t*0.10;',
+    '  float ex=min(uv.x,1.-uv.x)/0.32;',
+    '  float ey=min(uv.y,1.-uv.y)/0.32;',
+    '  float edgeDist=min(ex,ey);',
+    '  float flow=sin(t2+uv.x*3.5+uv.y*2.1)*.5+.5;',
+    '  flow=mix(flow,sin(t2*.7+uv.x*ar*2.1+uv.y*3.5)*.5+.5,.4);',
+    '  float cs=(1.-clamp(edgeDist,0.,1.))*.16*flow;',
+    '  vec3 orange=vec3(1.,.373,.012);',          /* #ff5f03 */
+    '  col=mix(col,orange,cs);',
+
+    /* ── 4. FILM GRAIN: strength=0.05 ── */
+    '  float grain=h21(uv+fract(vec2(u_t*.37,u_t*.61)))*.05-.025;',
+    '  col+=vec3(grain);',
+
+    '  gl_FragColor=vec4(clamp(col,0.,1.),1.);',
+    '}'
+  ].join('\n');
+
+  function mkShader(type, src) {
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+      console.warn('shader err', gl.getShaderInfoLog(s)); return null;
+    }
+    return s;
+  }
+
+  var vs = mkShader(gl.VERTEX_SHADER, VS);
+  var fs = mkShader(gl.FRAGMENT_SHADER, FS);
+  if (!vs || !fs) return;
+
+  var prog = gl.createProgram();
+  gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+    console.warn('prog err', gl.getProgramInfoLog(prog)); return;
+  }
+
+  var buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER,
+    new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]),
+    gl.STATIC_DRAW);
+
+  var aPos  = gl.getAttribLocation(prog, 'a_p');
+  var uRes  = gl.getUniformLocation(prog, 'u_res');
+  var uTime = gl.getUniformLocation(prog, 'u_t');
+
+  function resize() {
+    var w = mount.offsetWidth || window.innerWidth;
+    var h = mount.offsetHeight || 480;
+    canvas.width = w; canvas.height = h;
+    gl.viewport(0, 0, w, h);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  var start = performance.now();
+  var raf;
+
+  function frame(now) {
+    var elapsed = (now - start) / 1000;
+    gl.useProgram(prog);
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.enableVertexAttribArray(aPos);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+    gl.uniform2f(uRes, canvas.width, canvas.height);
+    gl.uniform1f(uTime, elapsed);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    raf = requestAnimationFrame(frame);
+  }
+
+  /* prefers-reduced-motion: 한 번만 렌더, 애니메이션 없음 */
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    frame(performance.now());
+  } else {
+    raf = requestAnimationFrame(frame);
+  }
+})();
+</script>
 
 <!-- ═══ SCROLL REVEAL ════════════════════════= -->
 <script>
