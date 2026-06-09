@@ -209,9 +209,8 @@
                   border-color 0.32s var(--ease);
     }
     .card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 24px 56px -10px rgba(32,32,32,0.12);
-      border-color: rgba(234,40,4,0.25);
+      border-color: rgba(234,40,4,0.20);
+      box-shadow: 0 8px 26px -16px rgba(32,32,32,0.10);  /* 아주 은은하게만 */
     }
 
     /* image area */
@@ -224,10 +223,7 @@
       transition: transform 0.55s var(--ease), filter 0.55s var(--ease);
       filter: saturate(0.92) contrast(1.05) brightness(0.97);
     }
-    .card:hover .card-img {
-      transform: scale(1.05);
-      filter: saturate(1) contrast(1.03) brightness(0.99);
-    }
+    /* 호버 시 사진 확대/변화 없음 (과한 효과 제거) */
 
     /* placeholder when image is missing */
     .card-ph {
@@ -309,19 +305,30 @@
       font-size: 0.875rem; font-weight: 700; letter-spacing: -0.01em;
       text-decoration: none; color: var(--text);
       position: relative;
-      transition: color 0.2s var(--ease);
+      transition: color 0.25s var(--ease), text-shadow 0.25s var(--ease);
     }
-    /* underline draw-in on hover */
+    /* 흐르듯 빛나는 밑줄 (그라데이션 + 글로우) */
     .card-link::after {
-      content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
-      height: 1px; background: var(--accent);
+      content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
+      height: 2px; border-radius: 2px;
+      background: linear-gradient(90deg, var(--accent), #ff7a3d, var(--accent));
+      background-size: 200% 100%;
+      box-shadow: 0 0 9px rgba(234,40,4,0.55);
       transform: scaleX(0); transform-origin: left;
-      transition: transform 0.22s var(--ease);
+      transition: transform 0.3s var(--ease);
     }
-    .card-link:hover { color: var(--accent); }
-    .card-link:hover::after { transform: scaleX(1); }
     .card-link svg { flex-shrink: 0; transition: transform 0.2s var(--ease); }
-    .card-link:hover svg { transform: translate(2px, -2px); }
+    /* 직접 링크 호버 + 카드 전체 호버 모두 → '사이트 보기' 글로우 & 흐르는 밑줄 */
+    .card-link:hover,
+    .card:hover .card-link { color: var(--accent); text-shadow: 0 0 14px rgba(234,40,4,0.5); }
+    .card-link:hover::after,
+    .card:hover .card-link::after { transform: scaleX(1); animation: lineFlow 1.6s linear infinite; }
+    .card-link:hover svg,
+    .card:hover .card-link svg { transform: translate(2px, -2px); }
+    @keyframes lineFlow { to { background-position: -200% 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      .card-link:hover::after, .card:hover .card-link::after { animation: none; }
+    }
 
     /* ── CTA BAND ────────────────────────────── */
     .cta-wrap {
