@@ -691,37 +691,37 @@
     '  float sw=fbm(su+vec2(f1,f2)*.55);',
     '  vec3 col=mix(vec3(1.),vec3(.941,.941,.941),sw*.75);',
 
-    /* ── 2. FLUTED GLASS: angle=31, freq=8, highlight=0.12,
-            highlightSoftness=0, lightAngle=-90, refraction=4,
-            aberration=0.61, shape=rounded, softness=1, speed=0.15 ── */
+    /* ── 2. FLUTED GLASS: aberration=0.61, freq=8, speed=0.15
+            핵심 원리: 밝은 배경에서 additive 하이라이트는 white clamp로 사라짐
+            → multiplicative 방식으로 채널별 색수차 구현
+            ChromaFlow의 오렌지 엣지 색상을 R/G/B 채널로 분리 → 무지개 shimmer ── */
     '  float rad31=radians(31.);',
-    '  vec2 fPerp=vec2(-sin(rad31),cos(rad31));',  /* across ridges */
-    '  float proj=dot(uv,fPerp);',
-    '  float phase=proj*8.+u_t*0.15;',            /* freq=8, speed=0.15 */
-    '  float fT=fract(phase);',
-    /* rounded profile: smooth sine bump */
-    '  float profile=sin(fT*3.14159265);',         /* 0→peak→0 */
-    '  float deriv=cos(fT*3.14159265);',           /* slope of profile */
-    /* lightAngle=-90 → light from top-right, creates highlight at ridge peak */
-    '  float fHL=step(.88,fT)*.12;',              /* highlight=0.12, highlightSoftness=0 */
-    '  float fShadow=(1.-profile)*.022;',
-    '  col+=vec3(fHL)-vec3(fShadow);',
-    /* chromatic aberration: 0.61 → subtle R/B split at ridge edge */
-    '  float ab=0.61*0.0006;',
-    '  float rT=fract(phase+ab*8.);',
-    '  float bT=fract(phase-ab*8.);',
-    '  col.r+=step(.88,rT)*.035;',
-    '  col.b+=step(.88,bT)*.035;',
+    '  vec2 fPerp=vec2(-sin(rad31),cos(rad31));',
+    '  float ab=0.61*0.04;',          /* phase offset = ab*8 = 0.192 cycle */
+    '  float projG=dot(uv,fPerp);',
+    '  float phR=projG*8.+u_t*0.15+ab*8.;',
+    '  float phG=projG*8.+u_t*0.15;',
+    '  float phB=projG*8.+u_t*0.15-ab*8.;',
+    '  float PI=3.14159265;',
+    '  float sinR=sin(fract(phR)*PI);',
+    '  float sinG=sin(fract(phG)*PI);',
+    '  float sinB=sin(fract(phB)*PI);',
+    /* 트러프 그림자: multiply (2.5% 어둡게) */
+    '  col*=1.-(1.-sinG)*0.018;',
+    /* 색수차 마스크: sinG² → 트러프는 0, 피크만 강함 (분홍 오염 방지) */
+    '  float abMask=sinG*sinG;',
+    '  col.r*=1.+(sinR-sinG)*0.07*abMask;',
+    '  col.b*=1.+(sinB-sinG)*0.07*abMask;',
 
     /* ── 3. CHROMAFLOW: baseColor=#fff, edges=#ff5f03,
             momentum=13, radius=3.5 ── */
     '  float t2=u_t*0.10;',
-    '  float ex=min(uv.x,1.-uv.x)/0.32;',
-    '  float ey=min(uv.y,1.-uv.y)/0.32;',
+    '  float ex=min(uv.x,1.-uv.x)/0.08;',   /* 엣지 8% 이내만 ChromaFlow */
+    '  float ey=min(uv.y,1.-uv.y)/0.08;',
     '  float edgeDist=min(ex,ey);',
     '  float flow=sin(t2+uv.x*3.5+uv.y*2.1)*.5+.5;',
     '  flow=mix(flow,sin(t2*.7+uv.x*ar*2.1+uv.y*3.5)*.5+.5,.4);',
-    '  float cs=(1.-clamp(edgeDist,0.,1.))*.16*flow;',
+    '  float cs=(1.-clamp(edgeDist,0.,1.))*.06*flow;',
     '  vec3 orange=vec3(1.,.373,.012);',          /* #ff5f03 */
     '  col=mix(col,orange,cs);',
 
